@@ -27,6 +27,7 @@ def _git_run(*args, cwd=None):
 
 def _git_config(cwd=None):
     """Configure git identity (needed on fresh Render instances)."""
+    cwd = cwd or os.getcwd()
     _git_run("config", "user.email", "bot@harman-feedback.local", cwd=cwd)
     _git_run("config", "user.name", "Harman Feedback Bot", cwd=cwd)
 
@@ -36,12 +37,16 @@ def backup_to_github(project_dir):
     Commit + push feedback.db to the 'data' branch.
     Called after each successful scrape.
     """
+    project_dir = os.path.abspath(project_dir)
+    cwd = project_dir
+    _git_config(cwd)
+
     db_path = os.path.join(project_dir, DB_FILE)
     if not os.path.exists(db_path):
         print("[backup] feedback.db not found, skipping backup")
         return False
 
-    # Check if there are actually new records
+    # Check if there are actually records
     try:
         conn = sqlite3.connect(db_path)
         cur = conn.cursor()
@@ -55,32 +60,26 @@ def backup_to_github(project_dir):
         print(f"[backup] error reading DB: {e}")
         return False
 
-    cwd = project_dir
     _git_config(cwd)
 
-    # Switch to data branch, or create it from main
-    branches = subprocess.run(
-        ["git", "branch", "-a"], cwd=cwd, capture_output=True, text=True
-    ).stdout
+    # Check if data branch exists on remote
+    check = subprocess.run(
+        ["git", "ls-remote", "--heads", "origin", BACKUP_BRANCH],
+        cwd=cwd, capture_output=True, text=True, timeout=10
+    )
+    has_branch = bool(check.stdout.strip())
 
-    if f"remotes/origin/{BACKUP_BRANCH}" in branches or f"{BACKUP_BRANCH}" in branches:
+    if has_branch:
         _git_run("checkout", BACKUP_BRANCH, cwd=cwd)
         _git_run("pull", "origin", BACKUP_BRANCH, cwd=cwd)
     else:
         _git_run("checkout", "--orphan", BACKUP_BRANCH, cwd=cwd)
-        # Clear the orphan branch so we only store the db file
         _git_run("rm", "-rf", ".", cwd=cwd)
 
     # Copy current db to project root and commit
     shutil.copy2(db_path, os.path.join(cwd, DB_FILE))
 
-    # Only track feedback.db on the data branch
-    if os.path.exists(os.path.join(cwd, ".gitignore")):
-        # Temporarily ignore .gitignore so feedback.db can be added
-        pass
-
     _git_run("add", DB_FILE, cwd=cwd)
-    # Check if there are staged changes
     status = subprocess.run(
         ["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True
     ).stdout.strip()
@@ -103,22 +102,26 @@ def restore_from_github(project_dir):
     Pull feedback.db from the 'data' branch on startup.
     Returns True if a restore happened, False if no backup existed.
     """
+    project_dir = os.path.abspath(project_dir)
     cwd = project_dir
+    os.chdir(cwd)
     _git_config(cwd)
 
-    branches = subprocess.run(
-        ["git", "branch", "-a"], cwd=cwd, capture_output=True, text=True
-    ).stdout
-
-    if f"remotes/origin/{BACKUP_BRANCH}" not in branches:
+    # Check if data branch exists on remote using ls-remote
+    check = subprocess.run(
+        ["git", "ls-remote", "--heads", "origin", BACKUP_BRANCH],
+        cwd=cwd, capture_output=True, text=True, timeout=10
+    )
+    if not check.stdout.strip():
         print("[restore] no data branch found, starting fresh")
         return False
 
-    # Fetch the data branch into a temp location
+    # Clone just the data branch into a temp subdir
     backup_dir = os.path.join(cwd, ".git_backup_temp")
-    os.makedirs(backup_dir, exist_ok=True)
+    if os.path.exists(backup_dir):
+        shutil.rmtree(backup_dir)
+    os.makedirs(backup_dir)
 
-    # Clone just the data branch into a subdir
     result = subprocess.run(
         ["git", "clone", "--branch", BACKUP_BRANCH, "--depth", "1",
          "https://github.com/syb767314028-oss/harman-feedback.git", backup_dir],
@@ -164,7 +167,7 @@ def restore_from_github(project_dir):
             restore_count = cur_local.fetchone()[0]
             conn_local.close()
             conn_backup.close()
-            print(f"[restore] merged backup into existing DB → {restore_count} total records")
+            print(f"[restore] merged backup → {restore_count} total records")
         else:
             # No local DB, just copy the backup
             shutil.copy2(backup_db, local_db)
