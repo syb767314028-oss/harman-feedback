@@ -41,10 +41,7 @@ def init_db():
     conn.close()
 
 
-init_db()
-
-
-# ---- GitHub backup/restore (run once at startup) ----
+# ---- GitHub restore → then init_db (CREATE IF NOT EXISTS won't clobber) ----
 import os as _os
 PROJECT_DIR = _os.path.dirname(_os.path.abspath(__file__))
 try:
@@ -53,6 +50,8 @@ try:
     print(f"[startup] GitHub restore: {'done' if restored else 'no backup found'}")
 except Exception as e:
     print(f"[startup] GitHub restore skipped: {e}")
+
+init_db()
 
 
 # ============================================================
