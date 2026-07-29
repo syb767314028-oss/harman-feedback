@@ -108,6 +108,7 @@ def scrape_googleplay():
 
     # Try multiple possible package names for Harman Kardon ONE App
     package_names = [
+        'com.harmankardon.oneapp',
         'com.harman.kardon.one',
         'com.harmankardon.one',
         'com.harmankardon.hkone',
