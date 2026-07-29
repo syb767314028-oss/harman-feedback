@@ -45,9 +45,14 @@ def index():
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
     import subprocess
-    result = subprocess.run(['python3', '-m', 'scraper'], 
-                          capture_output=True, text=True)
-    return jsonify({'status': 'ok', 'output': result.stdout, 'error': result.stderr})
+    import threading
+    
+    def run_scraper():
+        subprocess.Popen(['python3', '-m', 'scraper'], 
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    threading.Thread(target=run_scraper, daemon=True).start()
+    return jsonify({'status': 'triggered'})
 
 @app.route('/api/stats')
 def stats():
