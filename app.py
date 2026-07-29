@@ -44,6 +44,17 @@ def init_db():
 init_db()
 
 
+# ---- GitHub backup/restore (run once at startup) ----
+import os as _os
+PROJECT_DIR = _os.path.dirname(_os.path.abspath(__file__))
+try:
+    from scraper import restore_from_github
+    restored = restore_from_github(PROJECT_DIR)
+    print(f"[startup] GitHub restore: {'done' if restored else 'no backup found'}")
+except Exception as e:
+    print(f"[startup] GitHub restore skipped: {e}")
+
+
 # ============================================================
 # Issue taxonomy + Chinese translations
 # ============================================================
@@ -196,6 +207,13 @@ def refresh():
     def run_scraper():
         subprocess.Popen(['python3', '-m', 'scraper'],
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # After scrape completes, backup to GitHub
+        import time; time.sleep(90)
+        try:
+            from scraper import backup_to_github
+            backup_to_github(PROJECT_DIR)
+        except Exception as e:
+            print(f"[backup] failed: {e}")
     threading.Thread(target=run_scraper, daemon=True).start()
     return jsonify({'status': 'triggered'})
 
