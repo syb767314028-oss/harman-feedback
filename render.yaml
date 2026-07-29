@@ -1,0 +1,24 @@
+# Render.com deployment configuration
+# See: https://render.com/docs/deploys
+
+services:
+  - type: web
+    name: harman-feedback
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    autoDeploy: false
+    healthCheckPath: /
+    region: oregon
+    plan: free
+    envVars:
+      - key: FLASK_ENV
+        value: production
+
+cronJobs:
+  - name: daily-scrape
+    command: python -m scraper
+    schedule: "0 8 * * *"  # Every day at 08:00 UTC
+    region: oregon
+    plan: free
+    disabled: false

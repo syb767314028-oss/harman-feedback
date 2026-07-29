@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harman Kardon ONE - User Feedback Dashboard</title>
+    <style>
+        :root {
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --pain: #ef4444;
+            --pain-bg: #fef2f2;
+            --gain: #10b981;
+            --gain-bg: #ecfdf5;
+            --neutral: #6b7280;
+            --neutral-bg: #f9fafb;
+            --reddit: #ff4500;
+            --gp: #00b060;
+            --accent: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header h1 .logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-primary:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+        }
+
+        /* Stats Cards */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card.total .number { color: var(--accent); }
+        .stat-card.pain .number { color: var(--pain); }
+        .stat-card.gain .number { color: var(--gain); }
+        .stat-card.neutral .number { color: var(--neutral); }
+
+        /* Filters */
+        .filters {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Sections */
+        .section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .section-title .badge.pain {
+            background: var(--pain-bg);
+            color: var(--pain);
+        }
+
+        .section-title .badge.gain {
+            background: var(--gain-bg);
+            color: var(--gain);
+        }
+
+        .section-title .badge.neutral {
+            background: var(--neutral-bg);
+            color: var(--neutral);
+        }
+
+        .section-body {
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Feedback Items */
+        .feedback-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 14px;
+            transition: background 0.15s;
+        }
+
+        .feedback-item:last-child {
+            border-bottom: none;
+        }
+
+        .feedback-item:hover {
+            background: #fafbfc;
+        }
+
+        .feedback-item.pain-item {
+            border-left: 3px solid var(--pain);
+        }
+
+        .feedback-item.gain-item {
+            border-left: 3px solid var(--gain);
+        }
+
+        .feedback-item.neutral-item {
+            border-left: 3px solid var(--neutral);
+        }
+
+        .source-badge {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .source-badge.reddit {
+            background: var(--reddit);
+        }
+
+        .source-badge.googleplay {
+            background: var(--gp);
+        }
+
+        .source-badge.appstore {
+            background: #007aff;
+        }
+
+        .feedback-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feedback-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        .feedback-body {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .feedback-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .rating {
+            color: #fbbf24;
+            letter-spacing: -1px;
+        }
+
+        .rating .empty {
+            color: #d1d5db;
+        }
+
+        .upvotes {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .upvotes svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .feedback-link {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .feedback-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Keywords Section */
+        .keywords-grid {
+            padding: 16px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .kw-tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .kw-tag.pain { background: var(--pain-bg); color: var(--pain); }
+        .kw-tag.gain { background: var(--gain-bg); color: var(--gain); }
+        .kw-tag.neutral { background: var(--neutral-bg); color: var(--neutral); }
+
+        /* Empty State */
+        .empty-state {
+            padding: 48px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* Platform placeholder notice */
+        .platform-notice {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 0.82rem;
+            color: #92400e;
+            margin-bottom: 20px;
+        }
+
+        .platform-notice strong {
+            color: #b45309;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px 12px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-card {
+                padding: 14px;
+            }
+
+            .stat-card .number {
+                font-size: 1.5rem;
+            }
+
+            .feedback-item {
+                padding: 12px 14px;
+            }
+
+            .filters {
+                padding: 12px 14px;
+            }
+
+            .section-header {
+                padding: 12px 14px;
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: var(--pain);
+        }
+
+        /* Trend chart area */
+        .trend-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .trend-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .trend-body {
+            padding: 16px 20px;
+        }
+
+        .chart-placeholder {
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 100%;
+        }
+
+        .chart-bar {
+            flex: 1;
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            transition: height 0.3s;
+        }
+
+        .chart-bar.pain { background: var(--pain); }
+        .chart-bar.gain { background: var(--gain); }
+        .chart-bar.neutral { background: var(--neutral); }
+
+        .chart-labels {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .chart-label {
+            flex: 1;
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .chart-legend-item .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .chart-legend-item .dot.pain { background: var(--pain); }
+        .chart-legend-item .dot.gain { background: var(--gain); }
+        .chart-legend-item .dot.neutral { background: var(--neutral); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <div class="logo">HK</div>
+                Harman Kardon ONE — User Feedback
+            </h1>
+            <div class="actions">
+                <span class="last-updated" id="lastUpdated"></span>
+                <button class="btn btn-secondary" onclick="loadStats()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                    </svg>
+                    Refresh Stats
+                </button>
+                <button class="btn btn-primary" id="scrapeBtn" onclick="triggerScrape()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                    Scrape Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Platform Notice -->
+        <div class="platform-notice">
+            <strong>Note:</strong> Apple App Store scraping requires a paid Scraping API subscription. 
+            Only Reddit and Google Play reviews are currently monitored.
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card total">
+                <div class="number">{{ total }}</div>
+                <div class="label">Total Feedback</div>
+            </div>
+            <div class="stat-card pain">
+                <div class="number">{{ pain }}</div>
+                <div class="label">Pain Points</div>
+            </div>
+            <div class="stat-card gain">
+                <div class="number">{{ gain }}</div>
+                <div class="label">Gain Points</div>
+            </div>
+            <div class="stat-card neutral">
+                <div class="number">{{ neutral }}</div>
+                <div class="label">Neutral</div>
+            </div>
+        </div>
+
+        <!-- 7-day Trend -->
+        <div class="trend-section">
+            <div class="trend-header">📈 Feedback Trend (Last 7 Days)</div>
+            <div class="trend-body">
+                <div class="chart-placeholder" id="chartPlaceholder">
+                    <div style="flex:1;text-align:center;color:var(--text-muted);font-size:0.8rem;padding-top:40px;">
+                        Loading trend data...
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="chart-legend-item"><div class="dot pain"></div> Pain</div>
+                    <div class="chart-legend-item"><div class="dot gain"></div> Gain</div>
+                    <div class="chart-legend-item"><div class="dot neutral"></div> Neutral</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <span class="filter-label">Sentiment:</span>
+                <button class="filter-btn active" data-filter="all" onclick="filterBy('all')">All</button>
+                <button class="filter-btn" data-filter="pain" onclick="filterBy('pain')">Pain</button>
+                <button class="filter-btn" data-filter="gain" onclick="filterBy('gain')">Gain</button>
+                <button class="filter-btn" data-filter="neutral" onclick="filterBy('neutral')">Neutral</button>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Platform:</span>
+                <button class="filter-btn platform-filter active" data-platform="all" onclick="filterByPlatform('all')">All</button>
+                <button class="filter-btn platform-filter" data-platform="reddit" onclick="filterByPlatform('reddit')">Reddit</button>
+                <button class="filter-btn platform-filter" data-platform="googleplay" onclick="filterByPlatform('googleplay')">Google Play</button>
+            </div>
+        </div>
+
+        <!-- Pain Points Section -->
+        <div class="section" id="painSection">
+            <div class="section-header">
+                <div class="section-title">
+                    😤 Pain Points
+                    <span class="badge pain" id="painCount">{{ pain }}</span>
+                </div>
+            </div>
+            <div class="section-body" id="painList">
+                {% for f in feedbacks %}
+                    {% if f.sentiment == 'pain' %}
+                    <div class="feedback-item pain-item" 
+                         data-source="{{ f.source }}" 
+                         data-sentiment="{{ f.sentiment }}"
+                         data-title="{{ f.title or '' }}"
+                         data-body="{{ f.body or '' }}">
+                        <div class="source-badge {{ 'reddit' if f.source == 'reddit' else 'googleplay' if f.source == 'googleplay' else 'appstore' }}">
+                            {{ 'R' if f.source == 'reddit' else 'GP' if f.source == 'googleplay' else 'AS' }}
+                        </div>
+                        <div class="feedback-content">
+                            {% if f.title %}
+                            <div class="feedback-title">{{ f.title }}</div>
+                            {% endif %}
+                            <div class="feedback-body">{{ f.body }}</div>
+                            <div class="feedback-meta">
+                                {% if f.rating %}
+                                <span class="rating">{{ '★' * f.rating }}<span class="empty">{{ '☆' * (5 - f.rating) }}</span></span>
+                                {% endif %}
+                                {% if f.upvotes and f.upvotes > 0 %}
+                                <span class="upvotes">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg>
+                                    {{ f.upvotes }}
+                                </span>
+                                {% endif %}
+                                <span>{{ f.collected_at[:10] if f.collected_at else 'N/A' }}</span>
+                                {% if f.url %}
+                                <a class="feedback-link" href="{{ f.url }}" target="_blank">View →</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% if not feedbacks or (feedbacks|selectattr('sentiment', 'equalto', 'pain')|list|length == 0) %}
+                <div class="empty-state">
+                    <div class="icon">💬</div>
+                    <p>No pain points recorded yet. Run a scrape to collect feedback.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Gain Points Section -->
+        <div class="section" id="gainSection">
+            <div class="section-header">
+                <div class="section-title">
+                    ✨ Gain Points
+                    <span class="badge gain" id="gainCount">{{ gain }}</span>
+                </div>
+            </div>
+            <div class="section-body" id="gainList">
+                {% for f in feedbacks %}
+                    {% if f.sentiment == 'gain' %}
+                    <div class="feedback-item gain-item" 
+                         data-source="{{ f.source }}" 
+                         data-sentiment="{{ f.sentiment }}"
+                         data-title="{{ f.title or '' }}"
+                         data-body="{{ f.body or '' }}">
+                        <div class="source-badge {{ 'reddit' if f.source == 'reddit' else 'googleplay' if f.source == 'googleplay' else 'appstore' }}">
+                            {{ 'R' if f.source == 'reddit' else 'GP' if f.source == 'googleplay' else 'AS' }}
+                        </div>
+                        <div class="feedback-content">
+                            {% if f.title %}
+                            <div class="feedback-title">{{ f.title }}</div>
+                            {% endif %}
+                            <div class="feedback-body">{{ f.body }}</div>
+                            <div class="feedback-meta">
+                                {% if f.rating %}
+                                <span class="rating">{{ '★' * f.rating }}<span class="empty">{{ '☆' * (5 - f.rating) }}</span></span>
+                                {% endif %}
+                                {% if f.upvotes and f.upvotes > 0 %}
+                                <span class="upvotes">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg>
+                                    {{ f.upvotes }}
+                                </span>
+                                {% endif %}
+                                <span>{{ f.collected_at[:10] if f.collected_at else 'N/A' }}</span>
+                                {% if f.url %}
+                                <a class="feedback-link" href="{{ f.url }}" target="_blank">View →</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% if not feedbacks or (feedbacks|selectattr('sentiment', 'equalto', 'gain')|list|length == 0) %}
+                <div class="empty-state">
+                    <div class="icon">🎉</div>
+                    <p>No gain points recorded yet. Run a scrape to collect feedback.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🏷️ Top Keywords</div>
+            </div>
+            <div class="keywords-grid" id="keywordsGrid">
+                <span style="color:var(--text-muted);font-size:0.82rem;">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Harman Kardon ONE Feedback Monitor · Auto-updates daily via Render.com Cron<br>
+            Data sources: Reddit Search API + Google Play Scraper
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Store all feedback items for client-side filtering
+        const allPainItems = Array.from(document.querySelectorAll('.feedback-item[data-sentiment="pain"]'));
+        const allGainItems = Array.from(document.querySelectorAll('.feedback-item[data-sentiment="gain"]'));
+        
+        let currentSentimentFilter = 'all';
+        let currentPlatformFilter = 'all';
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        function filterBy(sentiment) {
+            currentSentimentFilter = sentiment;
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === sentiment);
+            });
+            applyFilters();
+        }
+
+        function filterByPlatform(platform) {
+            currentPlatformFilter = platform;
+            document.querySelectorAll('.filter-btn.platform-filter').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.platform === platform);
+            });
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const painSection = document.getElementById('painSection');
+            const gainSection = document.getElementById('gainSection');
+
+            allPainItems.forEach(item => {
+                const matchesSentiment = currentSentimentFilter === 'all' || currentSentimentFilter === 'pain';
+                const matchesPlatform = currentPlatformFilter === 'all' || item.dataset.source === currentPlatformFilter;
+                item.style.display = (matchesSentiment && matchesPlatform) ? '' : 'none';
+            });
+
+            allGainItems.forEach(item => {
+                const matchesSentiment = currentSentimentFilter === 'all' || currentSentimentFilter === 'gain';
+                const matchesPlatform = currentPlatformFilter === 'all' || item.dataset.source === currentPlatformFilter;
+                item.style.display = (matchesSentiment && matchesPlatform) ? '' : 'none';
+            });
+
+            // Hide entire sections if no visible items
+            const visiblePain = allPainItems.filter(i => i.style.display !== 'none').length;
+            const visibleGain = allGainItems.filter(i => i.style.display !== 'none').length;
+            painSection.style.display = visiblePain > 0 ? '' : 'none';
+            gainSection.style.display = visibleGain > 0 ? '' : 'none';
+        }
+
+        async function loadStats() {
+            try {
+                const resp = await fetch('/api/stats');
+                const data = await resp.json();
+
+                // Render keywords
+                const kwGrid = document.getElementById('keywordsGrid');
+                if (data.keywords && data.keywords.length > 0) {
+                    kwGrid.innerHTML = data.keywords.map(kw => {
+                        const sentiment = kw.sentiment || 'neutral';
+                        return `<span class="kw-tag ${sentiment}">${kw.keyword} <small>(${kw.count})</small></span>`;
+                    }).join('');
+                } else {
+                    kwGrid.innerHTML = '<span style="color:var(--text-muted);font-size:0.82rem;">No keywords yet</span>';
+                }
+
+                // Render trend chart
+                renderTrendChart(data.trend);
+            } catch (e) {
+                console.error('Stats load error:', e);
+            }
+        }
+
+        function renderTrendChart(trend) {
+            const placeholder = document.getElementById('chartPlaceholder');
+            if (!trend || trend.length === 0) {
+                placeholder.innerHTML = '<div style="flex:1;text-align:center;color:var(--text-muted);font-size:0.8rem;padding-top:40px;">No trend data available</div>';
+                return;
+            }
+
+            // Group by date
+            const byDate = {};
+            for (const row of trend) {
+                const d = row.date;
+                if (!byDate[d]) byDate[d] = { pain: 0, gain: 0, neutral: 0 };
+                byDate[d][row.sentiment] = row.count;
+            }
+
+            const dates = Object.keys(byDate).sort();
+            if (dates.length === 0) {
+                placeholder.innerHTML = '<div style="flex:1;text-align:center;color:var(--text-muted);font-size:0.8rem;padding-top:40px;">No trend data</div>';
+                return;
+            }
+
+            const maxVal = Math.max(...trend.map(r => r.count), 1);
+            const height = 120;
+
+            placeholder.innerHTML = dates.map(d => {
+                const v = byDate[d];
+                const painH = Math.max(4, (v.pain / maxVal) * height);
+                const gainH = Math.max(4, (v.gain / maxVal) * height);
+                const neutralH = Math.max(4, (v.neutral / maxVal) * height);
+                const label = d.slice(5); // MM-DD
+                return `
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                        <div style="height:${height}px;display:flex;gap:2px;align-items:flex-end;">
+                            <div class="chart-bar pain" style="height:${painH}px;width:8px;" title="Pain: ${v.pain}"></div>
+                            <div class="chart-bar gain" style="height:${gainH}px;width:8px;" title="Gain: ${v.gain}"></div>
+                            <div class="chart-bar neutral" style="height:${neutralH}px;width:8px;" title="Neutral: ${v.neutral}"></div>
+                        </div>
+                        <div style="font-size:0.6rem;color:var(--text-muted);">${label}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function triggerScrape() {
+            const btn = document.getElementById('scrapeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Scraping...';
+            showToast('Scraping started... this may take a minute.');
+
+            try {
+                const resp = await fetch('/api/refresh', { method: 'POST' });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    showToast('Scrape error: ' + data.error, true);
+                } else {
+                    showToast('Scrape complete! Refreshing page...');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } catch (e) {
+                showToast('Scrape failed: ' + e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg> Scrape Now`;
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            // Set last updated time
+            document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleString();
+        });
+    </script>
+</body>
+</html>
